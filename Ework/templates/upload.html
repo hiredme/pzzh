@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}上传作文 - 英语作文批改系统{% endblock %}
+
+{% block extra_css %}
+<style>
+    .upload-card {
+        max-width: 800px;
+        margin: 0 auto;
+        border-radius: 15px;
+    }
+
+    .drop-zone {
+        border: 2px dashed #ced4da;
+        border-radius: 10px;
+        padding: 2rem;
+        text-align: center;
+        background: #f8f9fa;
+        transition: all 0.3s ease;
+    }
+
+    .drop-zone.dragover {
+        border-color: #4a86e8;
+        background-color: rgba(74, 134, 232, 0.1);
+    }
+
+    #preview-area {
+        min-height: 200px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-4">
+    <div class="col-lg-8">
+        <div class="card upload-card shadow">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="fas fa-upload me-2"></i>上传作文文档</h4>
+            </div>
+
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" id="upload-form">
+                    {% csrf_token %}
+
+                    <!-- 文件类型选择 -->
+                    <div class="mb-4">
+                        <label class="form-label">选择文件类型</label>
+                        {{ form.file_type }}
+                    </div>
+
+                    <!-- 文件上传区域 -->
+                    <div class="mb-4">
+                        <label class="form-label">选择或拖拽文件</label>
+                        <div class="drop-zone" id="drop-zone">
+                            <div class="dz-message">
+                                <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                                <p class="mb-0">拖拽文件到这里或点击选择</p>
+                                {{ form.original_file }}
+                            </div>
+                        </div>
+                        <div class="form-text mt-2">
+                            支持格式：{{ supported_formats }}
+                        </div>
+                    </div>
+
+                    <!-- 文件预览 -->
+                    <div class="mb-4" id="preview-area" style="display:none;">
+                        <h6 class="mb-3">文件预览：</h6>
+                        <div class="card">
+                            <div class="card-body">
+                                <div id="file-preview-content"></div>
+                                <p class="mb-0">
+                                    <span id="file-name"></span>
+                                    <span id="file-size" class="text-muted ms-2"></span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- OCR选项 -->
+                    <div class="mb-4 form-check form-switch">
+                        {{ form.ocr_used }}
+                        <label class="form-check-label" for="{{ form.ocr_used.id_for_label }}">
+                            启用OCR文字识别（适用于图片文件）
+                        </label>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 py-2">
+                        <i class="fas fa-cloud-upload-alt me-2"></i>开始上传
+                    </button>
+                    <div id="processing-alert" class="alert alert-info mt-3" style="display:none;">
+                        <i class="fas fa-sync fa-spin me-2"></i>
+                        正在处理中，请勿关闭页面（通常需要10-30秒）...
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.getElementById('upload-form').addEventListener('submit', function () {
+        document.getElementById('processing-alert').style.display = 'block';
+    });
+    document.addEventListener('DOMContentLoaded', function () {
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.querySelector('input[type="file"]');
+        const previewArea = document.getElementById('preview-area');
+
+        // 拖拽处理
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            fileInput.files = e.dataTransfer.files;
+            handleFileSelect();
+        });
+
+        // 文件选择处理
+        fileInput.addEventListener('change', handleFileSelect);
+
+        function handleFileSelect() {
+            const file = fileInput.files[0];
+            if (file) {
+                previewArea.style.display = 'block';
+                document.getElementById('file-name').textContent = file.name;
+                document.getElementById('file-size').textContent =
+                    `(${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+
+                // 简单预览逻辑
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        document.getElementById('file-preview-content').innerHTML =
+                            `<img src="${e.target.result}" class="img-fluid" alt="预览">`;
+                    }
+                    reader.readAsDataURL(file);
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,77 @@
+<!-- templates/registration/register.html -->
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}用户注册 - 英语作文批改系统{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-lg">
+                <!-- 卡片头部 -->
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0"><i class="fas fa-user-plus me-2"></i>欢迎注册新账户</h4>
+                </div>
+
+                <!-- 卡片主体 -->
+                <div class="card-body">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+
+                        <!-- 用户名输入 -->
+                        <div class="mb-4">
+                            <label for="id_username" class="form-label">用户名</label>
+                            {{ form.username }}
+                            <div class="form-text">请输入4-150位字符，支持字母、数字和@/./+/-/_符号</div>
+                        </div>
+
+                        <!-- 邮箱输入 -->
+                        <div class="mb-4">
+                            <label for="id_email" class="form-label">电子邮箱</label>
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.email.errors.as_text }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- 密码输入组 -->
+                        <div class="row g-3">
+                            <!-- 密码 -->
+                            <div class="col-md-6">
+                                <label for="id_password1" class="form-label">设置密码</label>
+                                {{ form.password1 }}
+                                <div class="form-text">建议使用8位以上混合字符</div>
+                            </div>
+
+                            <!-- 确认密码 -->
+                            <div class="col-md-6">
+                                <label for="id_password2" class="form-label">确认密码</label>
+                                {{ form.password2 }}
+                            </div>
+                        </div>
+
+                        <!-- 提交按钮 -->
+                        <div class="d-grid mt-5">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-user-check me-2"></i>立即注册
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- 登录引导 -->
+                    <div class="mt-4 text-center">
+                        <p class="text-muted">已有账户？
+                            <a href="{% url 'login' %}" class="text-decoration-none fw-bold">
+                                <i class="fas fa-sign-in-alt me-1"></i>前往登录
+                            </a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

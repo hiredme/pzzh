@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}批改详情 - 英语作文批改系统{% endblock %}
+
+{% block extra_css %}
+<style>
+    .annotation-dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-left: 3px;
+    }
+
+    .error-type-badge {
+        position: sticky;
+        top: 20px;
+        z-index: 1;
+    }
+
+    .text-preview {
+        white-space: pre-wrap;
+        line-height: 1.8;
+        border-left: 3px solid #0d6efd;
+        padding-left: 1rem;
+    }
+
+    .score-progress {
+        height: 25px;
+        border-radius: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- 面包屑导航 -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'index' %}">首页</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'submission_history' %}">提交历史</a></li>
+            <li class="breadcrumb-item active" aria-current="page">批改详情</li>
+        </ol>
+    </nav>
+
+    <!-- 提交概览卡片 -->
+    <div class="card shadow mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-file-alt me-2"></i>
+                提交信息 - {{ submission.get_file_type_display }}
+            </h5>
+        </div>
+        <div class="card-body">
+            <dl class="row mb-0">
+                <dt class="col-sm-3">上传时间</dt>
+                <dd class="col-sm-9">{{ submission.upload_time|date:"Y-m-d H:i" }}</dd>
+
+                <dt class="col-sm-3">文件大小</dt>
+                <dd class="col-sm-9">{{ submission.file_size }} KB</dd>
+
+                <dt class="col-sm-3">处理状态</dt>
+                <dd class="col-sm-9">
+                    <span
+                        class="badge bg-{% if submission.status == 'completed' %}success{% elif submission.status == 'failed' %}danger{% else %}warning{% endif %}">
+                        {{ submission.get_status_display }}
+                    </span>
+                </dd>
+
+                <dt class="col-sm-3">适用年级</dt>
+                <dd class="col-sm-9">{{ essay.language_level }}</dd>
+
+                {% if submission.ocr_used %}
+                <dt class="col-sm-3">OCR处理</dt>
+                <dd class="col-sm-9"><i class="fas fa-check-circle text-success"></i> 已启用</dd>
+                {% endif %}
+            </dl>
+        </div>
+    </div>
+
+    <!-- 作文内容切换导航 -->
+    <nav class="mb-4">
+        <div class="nav nav-tabs" id="text-tab" role="tablist">
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#original-text" type="button">
+                原始文本
+            </button>
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#processed-text" type="button">
+                修正文本
+            </button>
+        </div>
+    </nav>
+
+    <!-- 作文内容区域 -->
+    <div class="tab-content mb-5">
+        <!-- 原始文本 -->
+        <div class="tab-pane fade show active" id="original-text">
+            <div class="card shadow-sm">
+                <div class="card-body text-preview">
+                    {{ essay.raw_text|linebreaksbr }}
+                </div>
+            </div>
+        </div>
+
+        <!-- 修正文本 -->
+        <div class="tab-pane fade" id="processed-text">
+            <div class="card shadow-sm">
+                <div class="card-body text-preview">
+                    {{ essay.processed_text|linebreaksbr }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 综合评分卡片 -->
+    <div class="card shadow mb-5">
+        <div class="card-header bg-success text-white">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-star-half-alt me-2"></i>
+                综合评分
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row mb-4">
+                <!-- 总评分 -->
+                <div class="col-md-4 text-center border-end">
+                    <h2 class="display-4 fw-bold text-primary">{{ score.total_score }}</h2>
+                    <p class="text-muted mb-0">总分 / 100</p>
+                </div>
+
+                <!-- 分项评分 -->
+                <div class="col-md-8">
+                    <div class="col-md-8">
+                        {% with score_data=score_data %}
+                        {% for label, value, color in score_data %}
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>{{ label }}</span>
+                                <span>{{ value }} 分</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-{{ color }}" role="progressbar" style="width: {{ value }}%"
+                                    aria-valuenow="{{ value }}" aria-valuemin="0" aria-valuemax="100">
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% endwith %}
+                    </div>
+                </div>
+
+                <!-- 评语 -->
+                <div class="alert alert-light">
+                    <h6><i class="fas fa-comment-dots me-2"></i>综合评价</h6>
+                    <p class="mb-0">{{ score.comments }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 错误分类展示 -->
+        {% if corrections %}
+        <div class="card shadow mb-5">
+            <div class="card-header bg-danger text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    批改明细（共 {{ corrections|length }} 处）
+                </h5>
+            </div>
+            <div class="card-body">
+                {% regroup corrections by error_type as error_list %}
+        
+                {% for error_group in error_list %}
+                <div class="mb-4">
+                    <!-- 错误类型标题 -->
+                    <h6 class="error-type-badge bg-white p-2 shadow-sm">
+                        <span class="badge bg-{% cycle 'danger' 'warning' 'info' 'secondary' %}">
+                            {{ error_group.grouper }}
+                        </span>
+                        <span class="ms-2 text-muted">共 {{ error_group.list|length }} 处</span>
+                    </h6>
+        
+                    <!-- 错误列表 -->
+                    <div class="list-group">
+                        {% for correction in error_group.list %}
+                        <div class="list-group-item">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <small class="text-muted">位置：{{ correction.start_pos }}-{{ correction.end_pos }}</small>
+                                    <div class="mt-2">
+                                        <span class="badge bg-light text-dark border">
+                                            <i class="fas fa-text-width me-1"></i>
+                                            {{ correction.original_text|truncatechars:20 }}
+                                        </span>
+                                        <i class="fas fa-arrow-right mx-2 text-muted"></i>
+                                        <span class="badge bg-light text-success border">
+                                            {{ correction.suggestion|truncatechars:20 }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="col-md-8">
+                                    <div class="alert alert-light mb-0">
+                                        {{ correction.suggestion }}
+                                        <div class="mt-2 text-end">
+                                            <small class="text-muted">
+                                                置信度：{{ correction.confidence|floatformat:2 }}
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        <!-- 处理日志 -->
+        <div class="card shadow">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-history me-2"></i>
+                    处理日志
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    {% for log in logs %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <span
+                                    class="badge bg-{% if log.log_type == 'API' %}info{% elif log.log_type == 'SYSTEM' %}warning{% else %}light text-dark{% endif %}">
+                                    {{ log.log_type }}
+                                </span>
+                                <span class="ms-2">{{ log.log_message }}</span>
+                            </div>
+                            <small class="text-muted">
+                                {{ log.created_at|date:"H:i:s" }}
+                            </small>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center text-muted py-3">
+                        没有相关日志记录
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endblock %}
+
+    {% block extra_js %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // 自动滚动到第一个错误位置
+            const firstError = document.querySelector('.error-type-badge');
+            if (firstError) {
+                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        });
+    </script>
+    {% endblock %}

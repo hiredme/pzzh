@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>{% block title %}小学英语作文批改系统{% endblock %}</title>
+
+    {# Bootstrap 5 CSS #}
+    <link href="https://cdn.bootcdn.net/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+    {# Font Awesome #}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    {# 自定义样式 #}
+    <style>
+        :root {
+            --primary-color: #4a86e8;
+            --secondary-color: #6c757d;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 2rem 0;
+        }
+
+        .navbar-brand {
+            font-weight: 600;
+            color: var(--primary-color) !important;
+        }
+
+        .upload-btn {
+            background-color: #28a745;
+            color: white !important;
+            border-radius: 20px;
+            padding: 0.5rem 1.5rem;
+        }
+
+        .alert-fixed {
+            position: fixed;
+            top: 70px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+        }
+
+        footer {
+            background-color: #e9ecef;
+            padding: 1rem 0;
+            margin-top: auto;
+        }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+    {# 导航栏 #}
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'index' %}">
+                <i class="fas fa-pencil-alt me-2"></i>英语作文批改
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'submission_history' %}">
+                            <i class="fas fa-history me-1"></i>提交记录
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link upload-btn" href="{% url 'upload' %}">
+                            <i class="fas fa-upload me-1"></i>上传作文
+                        </a>
+                    </li>
+                </ul>
+
+                <ul class="navbar-nav">
+                    {% if user.is_authenticated %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user me-1"></i>{{ user.username }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#">个人中心</a></li>
+                            {# <li><a class="dropdown-item" href="{% url 'profile' %}">个人中心</a></li> #}
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li>
+                                {# <form method="post" action="{% url 'logout' %}"> #}
+                                    <form method="post" action="#">
+
+                                        {% csrf_token %}
+                                        <button type="submit" class="dropdown-item">退出登录</button>
+                                    </form>
+                            </li>
+                        </ul>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'login' %}">登录/注册</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    {# 消息提示 #}
+    <div class="container">
+        {% if messages %}
+        <div class="alert-fixed">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    {# 主要内容区域 #}
+    <main class="main-content">
+        <div class="container">
+            {% block content %}
+            {# 子模板内容 #}
+            {% endblock %}
+        </div>
+    </main>
+
+    {# 页脚 #}
+    <footer>
+        <div class="container text-center text-muted">
+            <p class="mb-0">
+                © 2024 英语作文批改系统
+                <span class="mx-2">|</span>
+                <a href="#" class="text-decoration-none me-2">关于我们</a>
+                <a href="#" class="text-decoration-none">帮助中心</a>
+            </p>
+        </div>
+    </footer>
+
+    {# 全局脚本 #}
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+
+    {# 初始化工具提示 #}
+    <script>
+        $(function () {
+            $('[data-bs-toggle="tooltip"]').tooltip()
+        })
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>
