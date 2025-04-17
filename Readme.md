@@ -66,5 +66,4 @@ python manage.py makemigrations
 python manage.py migrate
 
 # 启动服务
-celery -A ework worker --loglevel=info &
 python manage.py runserver

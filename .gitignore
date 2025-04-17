@@ -22,5 +22,6 @@ vscode/
 project
 pydevproject
 
+Ework/migrations/*.py
 
 media/
