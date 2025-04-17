@@ -51,12 +51,15 @@ Ework是一个基于Django的AI英语作文智能批改平台，集成DeepSeek�
 git clone https://github.com/yourrepo/ework.git
 
 # 安装依赖
-pip install django celery requests python-dotenv
+python -m pip install -r requirements.txt
 
-# 环境配置（创建.env文件）
-echo "DEBUG=True" >> .env
-echo "DEEPSEEK_API_KEY=your_api_key" >> .env
-echo "DJANGO_SECRET_KEY=your_secret" >> .env
+#创建local_settings.py
+#内容为如下：
+DEEPSEEK_API = {
+    "API_URL": "https://api.deepseek.com/v1/chat/completions",
+    "API_KEY": "your_apikey",
+    "TIMEOUT": 600,  # 请求超时时间
+    "RETRIES": 3,  }
 
 # 数据库迁移
 python manage.py makemigrations
