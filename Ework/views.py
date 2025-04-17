@@ -1,6 +1,8 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.db.models import Prefetch
+
+from local_settings import DEEPSEEK_API
 from .models import Submission, Score
 from django.contrib import messages
 from .forms import UploadForm
@@ -169,12 +171,7 @@ import requests
 from django.conf import settings
 from .models import Submission, Essay, Score, Correction, SystemLog
 
-DEEPSEEK_API = {
-    "API_URL": "https://api.deepseek.com/v1/chat/completions",
-    "API_KEY": "sk-a2f0e3b8c0d14e929c5de8ad44a8effe",
-    "TIMEOUT": 600,  # 请求超时时间
-    "RETRIES": 3,  # 失败重试次数
-}
+
 
 
 @shared_task(bind=True, max_retries=DEEPSEEK_API.get("RETRIES", 3))
